@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from database import get_db
-from models import Inventory, Vendor
+from models import Equipment, Inventory
 from schemas import (
     InventoryCreate,
     InventoryUpdate,
@@ -30,17 +30,15 @@ async def list_inventory(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    """List inventory parts with optional category filter or low_stock flag. Joins vendor for supplier name."""
-    query = select(Inventory).options(joinedload(Inventory.supplier))
-    filters = []
+    """List inventory parts with optional category filter or low_stock flag. Joins equipment and vendor for derived part/supplier data."""
+    query = select(Inventory).options(
+        joinedload(Inventory.equipment).joinedload(Equipment.vendor)
+    )
 
     if category:
-        filters.append(Inventory.category == category)
+        query = query.join(Inventory.equipment).where(Equipment.equipment_category == category)
     if low_stock:
-        filters.append(Inventory.current_stock <= Inventory.minimum_level)
-
-    if filters:
-        query = query.where(and_(*filters))
+        query = query.where(Inventory.quantity_available <= Inventory.quantity_reserved)
 
     query = query.offset(skip).limit(limit)
     result = await db.execute(query)
@@ -48,16 +46,17 @@ async def list_inventory(
 
     out = []
     for it in items:
+        equipment = it.equipment
         out.append({
-            "part_id": it.part_id,
-            "part_number": it.part_number,
-            "part_name": it.part_name,
-            "category": it.category,
-            "current_stock": it.current_stock,
-            "minimum_level": it.minimum_level,
-            "unit_price": float(it.unit_price) if it.unit_price is not None else None,
-            "supplier_vendor_id": it.supplier_vendor_id,
-            "supplier_name": it.supplier.vendor_name if it.supplier is not None else None,
+            "part_id": it.inventory_id,
+            "part_number": equipment.equipment_code if equipment is not None else None,
+            "part_name": equipment.equipment_name if equipment is not None else None,
+            "category": equipment.equipment_category if equipment is not None else None,
+            "current_stock": it.quantity_available,
+            "minimum_level": it.quantity_reserved,
+            "unit_price": float(equipment.acquisition_cost) if equipment is not None and equipment.acquisition_cost is not None else None,
+            "supplier_vendor_id": equipment.vendor_id if equipment is not None else None,
+            "supplier_name": equipment.vendor.vendor_name if equipment is not None and equipment.vendor is not None else None,
             "created_at": it.created_at,
             "updated_at": it.updated_at,
         })
@@ -165,24 +164,27 @@ async def low_stock_parts(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    query = select(Inventory).options(joinedload(Inventory.supplier)).where(Inventory.current_stock <= Inventory.minimum_level)
-    # order by (Current_Stock - Minimum_Level) ASC
-    query = query.order_by((Inventory.current_stock - Inventory.minimum_level).asc())
+    query = select(Inventory).options(
+        joinedload(Inventory.equipment).joinedload(Equipment.vendor)
+    ).where(Inventory.quantity_available <= Inventory.quantity_reserved)
+    # order by available quantity relative to reserved quantity ASC
+    query = query.order_by((Inventory.quantity_available - Inventory.quantity_reserved).asc())
     result = await db.execute(query)
     items = result.scalars().all()
 
     out = []
     for it in items:
+        equipment = it.equipment
         out.append({
-            "part_id": it.part_id,
-            "part_number": it.part_number,
-            "part_name": it.part_name,
-            "category": it.category,
-            "current_stock": it.current_stock,
-            "minimum_level": it.minimum_level,
-            "unit_price": float(it.unit_price) if it.unit_price is not None else None,
-            "supplier_vendor_id": it.supplier_vendor_id,
-            "supplier_name": it.supplier.vendor_name if it.supplier is not None else None,
+            "part_id": it.inventory_id,
+            "part_number": equipment.equipment_code if equipment is not None else None,
+            "part_name": equipment.equipment_name if equipment is not None else None,
+            "category": equipment.equipment_category if equipment is not None else None,
+            "current_stock": it.quantity_available,
+            "minimum_level": it.quantity_reserved,
+            "unit_price": float(equipment.acquisition_cost) if equipment is not None and equipment.acquisition_cost is not None else None,
+            "supplier_vendor_id": equipment.vendor_id if equipment is not None else None,
+            "supplier_name": equipment.vendor.vendor_name if equipment is not None and equipment.vendor is not None else None,
             "created_at": it.created_at,
             "updated_at": it.updated_at,
         })

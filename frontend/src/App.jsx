@@ -23,6 +23,8 @@ import { Dashboard } from './pages/Dashboard/Dashboard';
 import StaffDirectory from './pages/Staff/StaffDirectory';
 import StaffProfile from './pages/Staff/StaffProfile';
 import InventoryList from './pages/Inventory/InventoryList';
+import VendorList from './pages/Vendors/VendorList';
+import SiteList from './pages/Sites/SiteList';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -255,6 +257,22 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <StaffProfile />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/vendors"
+        element={
+          <ProtectedRoute>
+            <VendorList />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/sites"
+        element={
+          <ProtectedRoute>
+            <SiteList />
           </ProtectedRoute>
         }
       />

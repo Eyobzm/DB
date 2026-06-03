@@ -3,6 +3,8 @@ Async SQLAlchemy database configuration and session management
 """
 
 import os
+from dotenv import load_dotenv
+load_dotenv()
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.pool import NullPool
 
@@ -13,7 +15,7 @@ DB_USER = os.getenv("DB_USER", "cfms_user")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "cfms_password")
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = os.getenv("DB_PORT", "3306")
-DB_NAME = os.getenv("DB_NAME", "CFMS")
+DB_NAME = os.getenv("DB_NAME", "cfms")
 
 # MySQL 8.0+ async connection string using aiomysql
 DATABASE_URL = f"mysql+aiomysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4"

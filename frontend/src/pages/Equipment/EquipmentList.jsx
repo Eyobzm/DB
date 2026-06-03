@@ -4,7 +4,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useReactTable, getCoreRowModel, getPaginationRowModel } from '@tanstack/react-table';
+import { useReactTable, getCoreRowModel, getPaginationRowModel, flexRender } from '@tanstack/react-table';
 import { useEquipmentList } from '../../hooks/useEquipment';
 
 const EQUIPMENT_STATUSES = [
@@ -254,7 +254,7 @@ export function EquipmentList() {
                   <tr key={row.id} className="hover:bg-gray-50">
                     {row.getVisibleCells().map((cell) => (
                       <td key={cell.id} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {cell.getContext().renderCell?.()}
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
                     ))}
                   </tr>

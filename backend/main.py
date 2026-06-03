@@ -22,6 +22,8 @@ from routers import (
     staff,
     certifications,
     inventory,
+    vendors,
+    sites,
 )
 from database import engine, AsyncSessionLocal
 from models import Base
@@ -62,6 +64,8 @@ app.include_router(dashboard.router)
 app.include_router(staff.router)
 app.include_router(certifications.router)
 app.include_router(inventory.router)
+app.include_router(vendors.router)
+app.include_router(sites.router)
 
 # =====================================================================
 # Startup & Shutdown Events

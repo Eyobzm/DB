@@ -15,6 +15,8 @@ from . import (
     staff,
     certifications,
     inventory,
+    vendors,
+    sites,
 )
 
 __all__ = [
@@ -30,4 +32,6 @@ __all__ = [
     "staff",
     "certifications",
     "inventory",
+    "vendors",
+    "sites",
 ]
